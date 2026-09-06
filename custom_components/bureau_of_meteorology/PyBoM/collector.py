@@ -50,6 +50,49 @@ class BomLocationError(BomApiError):
     """Raised when coordinates fall outside the BOM coverage area."""
 
 
+async def _get(
+    session: aiohttp.ClientSession,
+    url: str,
+    params: dict[str, str] | None = None,
+) -> Any:
+    """Perform a single GET, raising BomApiError for anything unusable."""
+    async with session.get(
+        url,
+        params=params,
+        headers={"User-Agent": USER_AGENT},
+        timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+    ) as response:
+        if response.status != 200:
+            raise BomApiError(f"{url} returned HTTP {response.status}", response.status)
+        return await response.json()
+
+
+async def async_search_locations(
+    session: aiohttp.ClientSession, query: str
+) -> list[dict[str, Any]]:
+    """Return BOM locations matching a place name, postcode or "lat,lon".
+
+    The BOM's own search index, so a name resolves to exactly the location the
+    Bureau would use. An empty list means nothing matched.
+    """
+    try:
+        result = await _get(session, URL_SEARCH, {"search": query})
+    except (aiohttp.ClientError, TimeoutError) as err:
+        raise BomApiError(f"Could not search for a location: {err}") from err
+    return result.get("data") or []
+
+
+async def async_location_detail(
+    session: aiohttp.ClientSession, geohash: str
+) -> dict[str, Any]:
+    """Return the full record for a geohash, including its coordinates."""
+    try:
+        result = await _get(session, URL_BASE + geohash)
+    except (aiohttp.ClientError, TimeoutError) as err:
+        raise BomApiError(f"Could not look up {geohash}: {err}") from err
+    return result.get("data") or {}
+
+
 @dataclass
 class BomData:
     """Snapshot of everything the collector fetched in one update."""
@@ -125,17 +168,7 @@ class Collector:
 
     async def _request(self, url: str, params: dict[str, str] | None = None) -> Any:
         """Perform a single GET, raising BomApiError for anything unusable."""
-        async with self._session.get(
-            url,
-            params=params,
-            headers={"User-Agent": USER_AGENT},
-            timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-        ) as response:
-            if response.status != 200:
-                raise BomApiError(
-                    f"{url} returned HTTP {response.status}", response.status
-                )
-            return await response.json()
+        return await _get(self._session, url, params)
 
     async def _fetch(self, url: str, cache_key: str) -> dict[str, Any]:
         """Fetch a resource, retrying transient failures and caching the result.

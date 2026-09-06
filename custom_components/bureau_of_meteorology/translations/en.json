@@ -7,15 +7,16 @@
     "error": {
       "bad_location": "These coordinates are outside the Bureau of Meteorology's coverage area",
       "cannot_connect": "Failed to connect to the Bureau of Meteorology",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_results": "No Australian location matched that search. Try a different suburb or postcode."
     },
     "step": {
       "user": {
         "title": "Set up Australian Bureau of Meteorology",
-        "description": "Latitude and longitude will be used to find the nearest weather station and to generate a forecast for your location. The default values come from your homeassistant \"Home\" zone (See Settings/Areas & Zones/Zones).",
-        "data": {
-          "latitude": "Latitude",
-          "longitude": "Longitude"
+        "description": "How would you like to set your location?",
+        "menu_options": {
+          "search": "Search for a suburb or postcode",
+          "coordinates": "Enter coordinates manually"
         }
       },
       "weather_name": {
@@ -65,6 +66,28 @@
           "latitude": "Latitude",
           "longitude": "Longitude"
         }
+      },
+      "search": {
+        "title": "Find Your Location",
+        "description": "Enter a suburb name or postcode, for example \"Blackburn\" or \"3130\". This uses the Bureau's own location index, so you get the same place the BoM website would use.",
+        "data": {
+          "search": "Suburb or postcode"
+        }
+      },
+      "pick": {
+        "title": "Choose Your Location",
+        "description": "Several places matched. Pick the one you want; its coordinates will be filled in for you.",
+        "data": {
+          "location": "Location"
+        }
+      },
+      "coordinates": {
+        "title": "Enter Coordinates",
+        "description": "Latitude and longitude will be used to find the nearest weather station and to generate a forecast for your location. The default values come from your homeassistant \"Home\" zone (See Settings/Areas & Zones/Zones).",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude"
+        }
       }
     }
   },
@@ -76,15 +99,16 @@
     "error": {
       "bad_location": "These coordinates are outside the Bureau of Meteorology's coverage area",
       "cannot_connect": "Failed to connect to the Bureau of Meteorology",
-      "unknown": "Unexpected error"
+      "unknown": "Unexpected error",
+      "no_results": "No Australian location matched that search. Try a different suburb or postcode."
     },
     "step": {
       "init": {
         "title": "Configure Australian Bureau of Meteorology",
-        "description": "Change the latitude and longitude used to find the nearest weather station.",
-        "data": {
-          "latitude": "Latitude",
-          "longitude": "Longitude"
+        "description": "How would you like to set your location?",
+        "menu_options": {
+          "search": "Search for a suburb or postcode",
+          "coordinates": "Enter coordinates manually"
         }
       },
       "weather_name": {
@@ -125,6 +149,28 @@
         "description": "You can change the basename of the sensor which holds the warnings data (e.g. Cairns for sensor.cairns_warnings).",
         "data": {
           "warnings_basename": "Change the name of the warnings sensor"
+        }
+      },
+      "search": {
+        "title": "Find Your Location",
+        "description": "Enter a suburb name or postcode, for example \"Blackburn\" or \"3130\". This uses the Bureau's own location index, so you get the same place the BoM website would use.",
+        "data": {
+          "search": "Suburb or postcode"
+        }
+      },
+      "pick": {
+        "title": "Choose Your Location",
+        "description": "Several places matched. Pick the one you want; its coordinates will be filled in for you.",
+        "data": {
+          "location": "Location"
+        }
+      },
+      "coordinates": {
+        "title": "Enter Coordinates",
+        "description": "Change the latitude and longitude used to find the nearest weather station.",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude"
         }
       }
     }

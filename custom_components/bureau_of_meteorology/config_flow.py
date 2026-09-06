@@ -15,6 +15,12 @@ from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 import voluptuous as vol
 
 from .const import (
@@ -33,11 +39,31 @@ from .const import (
     OBSERVATION_SENSOR_TYPES,
     SENSOR_LABELS,
 )
-from .PyBoM.collector import BomApiError, BomLocationError, Collector
+from .PyBoM.collector import (
+    BomApiError,
+    BomLocationError,
+    Collector,
+    async_location_detail,
+    async_search_locations,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 MAX_FORECAST_DAYS = 7
+
+CONF_SEARCH = "search"
+CONF_LOCATION = "location"
+
+
+def _location_label(result: dict[str, Any]) -> str:
+    """Describe a search hit well enough to tell same-named suburbs apart."""
+    parts = [result.get("name") or "?"]
+    if state := result.get("state"):
+        parts.append(state)
+    label = ", ".join(parts)
+    if postcode := result.get("postcode"):
+        label = f"{label} {postcode}"
+    return label
 
 
 def _entry_for_geohash(hass, geohash: str, exclude_entry_id: str) -> bool:
@@ -65,6 +91,7 @@ class BomFlowSteps:
 
     collector: Collector
     data: dict[str, Any]
+    results: list[dict[str, Any]]
 
     def _default(self, key: str, fallback: Any) -> Any:
         """Return the value to prefill for ``key``."""
@@ -92,8 +119,97 @@ class BomFlowSteps:
             return "cannot_connect"
         return None
 
-    async def _async_step_location(
-        self, step_id: str, user_input: dict[str, Any] | None
+    async def async_step_search(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Look the location up by suburb name or postcode."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            query = user_input[CONF_SEARCH].strip()
+            try:
+                self.results = await async_search_locations(
+                    async_get_clientsession(self.hass), query
+                )
+            except BomApiError as err:
+                _LOGGER.debug("Location search failed: %s", err)
+                errors["base"] = "cannot_connect"
+            else:
+                if self.results:
+                    return await self.async_step_pick()
+                errors["base"] = "no_results"
+
+        return self.async_show_form(
+            step_id="search",
+            data_schema=vol.Schema({vol.Required(CONF_SEARCH): str}),
+            errors=errors,
+        )
+
+    async def async_step_pick(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Choose between the places the search matched."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            try:
+                detail = await async_location_detail(session, user_input[CONF_LOCATION])
+            except BomApiError as err:
+                _LOGGER.debug("Could not read the chosen location: %s", err)
+                errors["base"] = "cannot_connect"
+            else:
+                # Store coordinates, not the geohash, so the entry keeps the
+                # same shape whichever way the location was chosen.
+                return await self._async_use_coordinates(
+                    {
+                        CONF_LATITUDE: detail["latitude"],
+                        CONF_LONGITUDE: detail["longitude"],
+                    },
+                    fallback_step="pick",
+                )
+
+        options = [
+            SelectOptionDict(value=result["geohash"], label=_location_label(result))
+            for result in self.results
+        ]
+        return self.async_show_form(
+            step_id="pick",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_LOCATION): SelectSelector(
+                        SelectSelectorConfig(
+                            options=options, mode=SelectSelectorMode.LIST
+                        )
+                    )
+                }
+            ),
+            errors=errors,
+        )
+
+    async def _async_use_coordinates(
+        self, coordinates: dict[str, Any], fallback_step: str
+    ) -> ConfigFlowResult:
+        """Validate the chosen coordinates and move on to naming."""
+        if error := await self._async_check_location(coordinates):
+            return await self._async_show_location_step(
+                fallback_step, errors={"base": error}
+            )
+        self.data = dict(coordinates)
+        return await self.async_step_weather_name()
+
+    async def _async_show_location_step(
+        self, step_id: str, errors: dict[str, str]
+    ) -> ConfigFlowResult:
+        """Re-show whichever location step the user came from."""
+        if step_id == "pick":
+            return await self.async_step_pick()
+        if step_id == "search":
+            return await self.async_step_search()
+        return await self.async_step_coordinates()
+
+    async def async_step_coordinates(
+        self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Ask for the coordinates and validate them against the BOM."""
         errors: dict[str, str] = {}
@@ -118,7 +234,7 @@ class BomFlowSteps:
             }
         )
         return self.async_show_form(
-            step_id=step_id, data_schema=data_schema, errors=errors
+            step_id="coordinates", data_schema=data_schema, errors=errors
         )
 
     async def async_step_weather_name(
@@ -272,6 +388,7 @@ class BomConfigFlow(BomFlowSteps, ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialise the config flow."""
         self.data = {}
+        self.results = []
 
     @staticmethod
     @callback
@@ -286,8 +403,10 @@ class BomConfigFlow(BomFlowSteps, ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
-        return await self._async_step_location("user", user_input)
+        """Offer to find the location by name, or to type coordinates."""
+        return self.async_show_menu(
+            step_id="user", menu_options=["search", "coordinates"]
+        )
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
@@ -353,6 +472,7 @@ class BomOptionsFlow(BomFlowSteps, OptionsFlow):
     def __init__(self) -> None:
         """Initialise the options flow."""
         self.data = {}
+        self.results = []
 
     def _default(self, key: str, fallback: Any) -> Any:
         """Prefill from the entry's current options, then its original data."""
@@ -363,8 +483,10 @@ class BomOptionsFlow(BomFlowSteps, OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the initial step."""
-        return await self._async_step_location("init", user_input)
+        """Offer to find the location by name, or to type coordinates."""
+        return self.async_show_menu(
+            step_id="init", menu_options=["search", "coordinates"]
+        )
 
     async def _async_finish(self) -> ConfigFlowResult:
         """Store the answers, keeping the coordinates where setup reads them."""

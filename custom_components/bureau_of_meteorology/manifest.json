@@ -1,12 +1,15 @@
 {
   "domain": "bureau_of_meteorology",
   "name": "Bureau of Meteorology",
-  "codeowners": ["@bremor", "@makin-things"],
+  "codeowners": [
+    "@bremor",
+    "@makin-things"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/bremor/bureau_of_meteorology",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/bremor/bureau_of_meteorology/issues",
   "requirements": [],
-  "version": "1.4.0"
+  "version": "1.5.0"
 }
