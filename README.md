@@ -24,9 +24,14 @@ After you have installed the custom component (see above):
 3. Search for `Bureau of Meteorology`. (If you don't see it, try refreshing your browser page to reload the cache.)
 4. Click `Submit` so add the integration.
 
-You will be asked for the latitude and longitude to use (defaulting to your Home
-zone), a name for the weather entities, and then which observation, forecast and
-warning sensors you would like to create.
+You will first be asked how to set your location. You can **search for a suburb
+or postcode** (for example `Blackburn` or `3130`) and pick from the matches, or
+enter latitude and longitude manually — the manual form defaults to your Home
+zone. Searching uses the Bureau's own location index, so you get the same place
+the BoM website would use for that name.
+
+You are then asked for a name for the weather entities, and which observation,
+forecast and warning sensors you would like to create.
 
 To change any of these later, use `Configure` on the integration. To move the
 integration to a different location, use `Reconfigure`.
@@ -64,6 +69,16 @@ logger:
 ## Release Notes
 
 Older release notes are on the [releases page][releases].
+
+### 1.5.0 - Find your location by suburb or postcode
+
+- Setup and `Configure` now offer a location search as an alternative to typing
+  coordinates. Enter a suburb name or postcode, pick from the matches (shown
+  with state and postcode, so same-named suburbs are distinguishable), and the
+  coordinates are filled in for you.
+- Uses the Bureau's own location index, so the place you pick is the one the
+  BoM website would use. The entry still stores coordinates, so nothing about
+  existing entries changes.
 
 ### 1.4.0 - Modernisation for current Home Assistant
 
