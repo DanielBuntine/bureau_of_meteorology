@@ -12,6 +12,10 @@ from .coordinator import BomConfigEntry
 
 TO_REDACT = {CONF_LATITUDE, CONF_LONGITUDE, "latitude", "longitude", "geohash"}
 
+# The location payload's id embeds the geohash (e.g. "Melbourne-r1r0fsn"), so
+# redacting the geohash key alone would still disclose the configured location.
+TO_REDACT_LOCATION = TO_REDACT | {"id"}
+
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: BomConfigEntry
@@ -28,7 +32,7 @@ async def async_get_config_entry_diagnostics(
         "last_update_success": coordinator.last_update_success,
         "data": async_redact_data(
             {
-                "locations": data.locations,
+                "locations": async_redact_data(data.locations, TO_REDACT_LOCATION),
                 "observations": data.observations,
                 "daily_forecasts": data.daily_forecasts,
                 "hourly_forecasts": data.hourly_forecasts,

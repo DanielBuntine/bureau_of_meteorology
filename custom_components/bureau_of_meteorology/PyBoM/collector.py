@@ -184,7 +184,8 @@ class Collector:
                 return data
             self._cache.pop(cache_key, None)
 
-        raise BomApiError(f"Could not fetch {cache_key}: {last_error}")
+        status = last_error.status if isinstance(last_error, BomApiError) else None
+        raise BomApiError(f"Could not fetch {cache_key}: {last_error}", status)
 
     async def async_resolve_location(self) -> None:
         """Resolve the configured coordinates to a BOM geohash.
@@ -222,9 +223,15 @@ class Collector:
             )
         except BomApiError as err:
             self.geohash = None
-            raise BomLocationError(
-                f"No BOM location for {self.latitude},{self.longitude}"
-            ) from err
+            # Only a definitive rejection means the coordinates are outside
+            # coverage. A timeout or 5xx is transient, and reporting it as a
+            # bad location would tell the user their valid Australian
+            # coordinates are unsupported.
+            if err.status in (400, 404):
+                raise BomLocationError(
+                    f"No BOM location for {self.latitude},{self.longitude}"
+                ) from err
+            raise
 
     def _format_observations(self, data: dict[str, Any]) -> None:
         """Flatten the nested wind and gust groups in an observation payload."""

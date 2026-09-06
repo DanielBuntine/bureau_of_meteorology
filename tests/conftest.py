@@ -31,6 +31,13 @@ FIXTURE_DIR = Path(__file__).parent / "fixtures"
 GEOHASH = "r1r0fsn"
 GEOHASH6 = GEOHASH[:6]
 
+# A second covered location, so tests can exercise moving an entry.
+GEOHASH_2 = "r3gx2fn"
+GEOHASH6_2 = GEOHASH_2[:6]
+
+MELBOURNE = (-37.8136, 144.9631)
+SYDNEY = (-33.8688, 151.2093)
+
 BASE = "https://api.weather.bom.gov.au/v1/locations"
 
 
@@ -48,14 +55,33 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 @pytest.fixture
 def api_responses() -> dict[str, dict[str, Any]]:
     """Return the recorded responses keyed by the URL the collector requests."""
-    return {
-        f"{BASE}": load_fixture("search"),
+    responses = {
         f"{BASE}/{GEOHASH}": load_fixture("location"),
         f"{BASE}/{GEOHASH6}/observations": load_fixture("observations"),
         f"{BASE}/{GEOHASH6}/forecasts/daily": load_fixture("forecasts_daily"),
         f"{BASE}/{GEOHASH6}/forecasts/hourly": load_fixture("forecasts_hourly"),
         f"{BASE}/{GEOHASH6}/warnings": load_fixture("warnings"),
     }
+
+    # The second location reuses the same payloads; only the geohash matters.
+    second = load_fixture("location")
+    second["data"]["geohash"] = GEOHASH_2
+    second["data"]["id"] = f"Sydney-{GEOHASH_2}"
+    second["data"]["name"] = "Sydney"
+    responses[f"{BASE}/{GEOHASH_2}"] = second
+    for suffix in ("observations", "forecasts/daily", "forecasts/hourly", "warnings"):
+        responses[f"{BASE}/{GEOHASH6_2}/{suffix}"] = responses[
+            f"{BASE}/{GEOHASH6}/{suffix}"
+        ]
+
+    # The search endpoint answers by coordinate, not by URL.
+    responses[BASE] = {
+        f"{MELBOURNE[0]},{MELBOURNE[1]}": load_fixture("search"),
+        f"{SYDNEY[0]},{SYDNEY[1]}": {
+            "data": [{"geohash": GEOHASH_2, "name": "Sydney", "state": "NSW"}]
+        },
+    }
+    return responses
 
 
 @pytest.fixture
@@ -69,6 +95,11 @@ def mock_api(api_responses):
         # A test can register an exception to simulate an API error.
         if isinstance(response, Exception):
             raise response
+        if url == BASE:
+            search = (params or {}).get("search", "")
+            if search not in response:
+                return {"data": []}
+            return response[search]
         return response
 
     with patch(
