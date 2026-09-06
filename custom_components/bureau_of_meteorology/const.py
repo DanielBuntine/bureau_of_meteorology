@@ -7,20 +7,17 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-
 from homeassistant.const import (
     PERCENTAGE,
-    DEGREE,
-    UnitOfTemperature,
+    EntityCategory,
     UnitOfLength,
     UnitOfSpeed,
+    UnitOfTemperature,
 )
 
 ATTRIBUTION: Final = "Data provided by the Australian Bureau of Meteorology"
 SHORT_ATTRIBUTION: Final = "Australian Bureau of Meteorology"
 MODEL_NAME: Final = "Weather Sensor"
-COLLECTOR: Final = "collector"
-UPDATE_LISTENER: Final = "update_listener"
 
 CONF_WEATHER_NAME: Final = "weather_name"
 CONF_FORECASTS_BASENAME: Final = "forecasts_basename"
@@ -33,7 +30,6 @@ CONF_OBSERVATIONS_MONITORED: Final = "observations_monitored"
 CONF_WARNINGS_CREATE: Final = "warnings_create"
 CONF_WARNINGS_BASENAME: Final = "warnings_basename"
 
-COORDINATOR: Final = "coordinator"
 DOMAIN: Final = "bureau_of_meteorology"
 
 MAP_CONDITION: Final = {
@@ -77,6 +73,11 @@ ATTR_API_WIND_SPEED_KNOT: Final = "wind_speed_knot"
 ATTR_API_WIND_DIRECTION: Final = "wind_direction"
 ATTR_API_GUST_SPEED_KILOMETRE: Final = "gust_speed_kilometre"
 ATTR_API_GUST_SPEED_KNOT: Final = "gust_speed_knot"
+ATTR_API_MAX_GUST_SPEED_KILOMETRE: Final = "max_gust_speed_kilometre"
+ATTR_API_MAX_GUST_SPEED_KNOT: Final = "max_gust_speed_knot"
+ATTR_API_MAX_GUST_TIME: Final = "max_gust_time"
+ATTR_API_STATION_DISTANCE: Final = "station_distance"
+ATTR_API_DEW_POINT: Final = "dew_point"
 
 ATTR_API_TEMP_MAX: Final = "temp_max"
 ATTR_API_TEMP_MIN: Final = "temp_min"
@@ -102,38 +103,91 @@ ATTR_API_ASTRONOMICAL_SUNRISE_TIME: Final = "astronomical_sunrise_time"
 ATTR_API_ASTRONOMICAL_SUNSET_TIME: Final = "astronomical_sunset_time"
 ATTR_API_WARNINGS: Final = "warnings"
 
+# Forecast keys that only ever apply to today, and so are created once rather
+# than once per forecast day.
+NOW_LATER_KEYS: Final = frozenset(
+    {
+        ATTR_API_NON_NOW_LABEL,
+        ATTR_API_NON_TEMP_NOW,
+        ATTR_API_NOW_LATER_LABEL,
+        ATTR_API_NOW_TEMP_LATER,
+    }
+)
+
+SENSOR_LABELS: Final[dict[str, str]] = {
+    "astronomical_sunrise_time": "Sunrise Time",
+    "astronomical_sunset_time": "Sunset Time",
+    "dew_point": "Dew Point",
+    "extended_text": "Extended Forecast",
+    "fire_danger": "Fire Danger",
+    "gust_speed_kilometre": "Gust Speed km/h",
+    "gust_speed_knot": "Gust Speed kn",
+    "humidity": "Humidity",
+    "icon_descriptor": "Icon Descriptor",
+    "max_gust_speed_kilometre": "Maximum Gust Speed km/h",
+    "max_gust_speed_knot": "Maximum Gust Speed kn",
+    "max_gust_time": "Maximum Gust Time",
+    "max_temp": "Todays Observed Maximum Temperature",
+    "mdi_icon": "MDI Icon",
+    "min_temp": "Todays Observed Minimum Temperature",
+    "now_later_label": "Later Label",
+    "now_now_label": "Now Label",
+    "now_temp_later": "Later Temperature",
+    "now_temp_now": "Now Temperature",
+    "rain_amount_max": "Rain Amount Maximum",
+    "rain_amount_min": "Rain Amount Minimum",
+    "rain_amount_range": "Rain Amount Range",
+    "rain_chance": "Rain Probability",
+    "rain_since_9am": "Rain Since 9am",
+    "short_text": "Short Summary Forecast",
+    "station_distance": "Observation Station Distance",
+    "temp": "Current Temperature",
+    "temp_feels_like": "Current Feels Like Temperature",
+    "temp_max": "Forecast Maximum Temperature",
+    "temp_min": "Forecast Minimum Temperature",
+    "uv_category": "UV Category",
+    "uv_end_time": "UV Protection End Time",
+    "uv_forecast": "UV Forecast Summary",
+    "uv_max_index": "UV Maximum Index",
+    "uv_start_time": "UV Protection Start Time",
+    "warnings": "Warnings",
+    "wind_direction": "Wind Direction",
+    "wind_speed_kilometre": "Wind Speed km/h",
+    "wind_speed_knot": "Wind Speed kn",
+}
+
 OBSERVATION_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key=ATTR_API_TEMP,
-        name="Current Temperature",
+        translation_key="temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_TEMP_FEELS_LIKE,
-        name="Current Feels Like Temperature",
+        translation_key="temp_feels_like",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_MAX_TEMP,
-        name="Todays Observed Maximum Temperature",
+        translation_key="max_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_MIN_TEMP,
-        name="Todays Observed Minimum Temperature",
+        translation_key="min_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_RAIN_SINCE_9AM,
-        name="Rain Since 9am",
+        translation_key="rain_since_9am",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.PRECIPITATION,
@@ -141,46 +195,73 @@ OBSERVATION_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     ),
     SensorEntityDescription(
         key=ATTR_API_HUMIDITY,
-        name="Humidity",
+        translation_key="humidity",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.HUMIDITY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_WIND_SPEED_KILOMETRE,
-        name="Wind Speed km/h",
+        translation_key="wind_speed_kilometre",
         native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
         device_class=SensorDeviceClass.WIND_SPEED,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_WIND_SPEED_KNOT,
-        name="Wind Speed kn",
+        translation_key="wind_speed_knot",
         native_unit_of_measurement=UnitOfSpeed.KNOTS,
         device_class=SensorDeviceClass.WIND_SPEED,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_WIND_DIRECTION,
-        name="Wind Direction",
+        translation_key="wind_direction",
     ),
     SensorEntityDescription(
         key=ATTR_API_GUST_SPEED_KILOMETRE,
-        name="Gust Speed km/h",
+        translation_key="gust_speed_kilometre",
         native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
         device_class=SensorDeviceClass.WIND_SPEED,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
         key=ATTR_API_GUST_SPEED_KNOT,
-        name="Gust Speed kn",
+        translation_key="gust_speed_knot",
         native_unit_of_measurement=UnitOfSpeed.KNOTS,
         device_class=SensorDeviceClass.WIND_SPEED,
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key=ATTR_API_MAX_GUST_SPEED_KILOMETRE,
+        translation_key="max_gust_speed_kilometre",
+        native_unit_of_measurement=UnitOfSpeed.KILOMETERS_PER_HOUR,
+        device_class=SensorDeviceClass.WIND_SPEED,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key=ATTR_API_MAX_GUST_SPEED_KNOT,
+        translation_key="max_gust_speed_knot",
+        native_unit_of_measurement=UnitOfSpeed.KNOTS,
+        device_class=SensorDeviceClass.WIND_SPEED,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key=ATTR_API_MAX_GUST_TIME,
+        translation_key="max_gust_time",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
+        key=ATTR_API_STATION_DISTANCE,
+        translation_key="station_distance",
+        native_unit_of_measurement=UnitOfLength.METERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    SensorEntityDescription(
         key="dew_point",
-        name="Dew Point",
+        translation_key="dew_point",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -190,107 +271,107 @@ OBSERVATION_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 FORECAST_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key=ATTR_API_TEMP_MAX,
-        name="Forecast Maximum Temperature",
+        translation_key="temp_max",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
         key=ATTR_API_TEMP_MIN,
-        name="Forecast Minimum Temperature",
+        translation_key="temp_min",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
         key=ATTR_API_EXTENDED_TEXT,
-        name="Extended Forecast",
+        translation_key="extended_text",
     ),
     SensorEntityDescription(
         key=ATTR_API_ICON_DESCRIPTOR,
-        name="Icon Descriptor",
+        translation_key="icon_descriptor",
     ),
     SensorEntityDescription(
         key=ATTR_API_MDI_ICON,
-        name="MDI Icon",
+        translation_key="mdi_icon",
     ),
     SensorEntityDescription(
         key=ATTR_API_SHORT_TEXT,
-        name="Short Summary Forecast",
+        translation_key="short_text",
     ),
     SensorEntityDescription(
         key=ATTR_API_UV_CATEGORY,
-        name="UV Category",
+        translation_key="uv_category",
     ),
     SensorEntityDescription(
         key=ATTR_API_UV_MAX_INDEX,
-        name="UV Maximum Index",
+        translation_key="uv_max_index",
     ),
     SensorEntityDescription(
         key=ATTR_API_UV_START_TIME,
-        name="UV Protection Start Time",
+        translation_key="uv_start_time",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
         key=ATTR_API_UV_END_TIME,
-        name="UV Protection End Time",
+        translation_key="uv_end_time",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
         key=ATTR_API_UV_FORECAST,
-        name="UV Forecast Summary",
+        translation_key="uv_forecast",
     ),
     SensorEntityDescription(
         key=ATTR_API_RAIN_AMOUNT_MIN,
-        name="Rain Amount Minimum",
+        translation_key="rain_amount_min",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
     ),
     SensorEntityDescription(
         key=ATTR_API_RAIN_AMOUNT_MAX,
-        name="Rain Amount Maximum",
+        translation_key="rain_amount_max",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
         device_class=SensorDeviceClass.PRECIPITATION,
     ),
     SensorEntityDescription(
         key=ATTR_API_RAIN_AMOUNT_RANGE,
-        name="Rain Amount Range",
+        translation_key="rain_amount_range",
     ),
     SensorEntityDescription(
         key=ATTR_API_RAIN_CHANCE,
-        name="Rain Probability",
+        translation_key="rain_chance",
         native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
         key=ATTR_API_FIRE_DANGER,
-        name="Fire Danger",
+        translation_key="fire_danger",
     ),
     SensorEntityDescription(
         key=ATTR_API_NON_NOW_LABEL,
-        name="Now Label",
+        translation_key="now_now_label",
     ),
     SensorEntityDescription(
         key=ATTR_API_NON_TEMP_NOW,
-        name="Now Temperature",
+        translation_key="now_temp_now",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
         key=ATTR_API_NOW_LATER_LABEL,
-        name="Later Label",
+        translation_key="now_later_label",
     ),
     SensorEntityDescription(
         key=ATTR_API_NOW_TEMP_LATER,
-        name="Later Temperature",
+        translation_key="now_temp_later",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
     ),
     SensorEntityDescription(
         key=ATTR_API_ASTRONOMICAL_SUNRISE_TIME,
-        name="Sunrise Time",
+        translation_key="astronomical_sunrise_time",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
         key=ATTR_API_ASTRONOMICAL_SUNSET_TIME,
-        name="Sunset Time",
+        translation_key="astronomical_sunset_time",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
 )
@@ -298,6 +379,6 @@ FORECAST_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
 WARNING_SENSOR_TYPES: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key=ATTR_API_WARNINGS,
-        name="Warnings",
+        translation_key="warnings",
     ),
 )
