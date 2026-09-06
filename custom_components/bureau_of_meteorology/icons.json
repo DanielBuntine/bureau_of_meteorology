@@ -1,0 +1,90 @@
+{
+  "entity": {
+    "sensor": {
+      "astronomical_sunrise_time": {
+        "default": "mdi:weather-sunset-up"
+      },
+      "astronomical_sunset_time": {
+        "default": "mdi:weather-sunset-down"
+      },
+      "extended_text": {
+        "default": "mdi:text-long"
+      },
+      "fire_danger": {
+        "default": "mdi:fire"
+      },
+      "gust_speed_kilometre": {
+        "default": "mdi:weather-windy-variant"
+      },
+      "gust_speed_knot": {
+        "default": "mdi:weather-windy-variant"
+      },
+      "icon_descriptor": {
+        "default": "mdi:weather-partly-cloudy"
+      },
+      "max_gust_speed_kilometre": {
+        "default": "mdi:weather-windy-variant"
+      },
+      "max_gust_speed_knot": {
+        "default": "mdi:weather-windy-variant"
+      },
+      "max_gust_time": {
+        "default": "mdi:clock-outline"
+      },
+      "mdi_icon": {
+        "default": "mdi:image-outline"
+      },
+      "now_later_label": {
+        "default": "mdi:label-outline"
+      },
+      "now_now_label": {
+        "default": "mdi:label-outline"
+      },
+      "rain_amount_max": {
+        "default": "mdi:weather-pouring"
+      },
+      "rain_amount_min": {
+        "default": "mdi:weather-rainy"
+      },
+      "rain_amount_range": {
+        "default": "mdi:weather-rainy"
+      },
+      "rain_chance": {
+        "default": "mdi:weather-rainy"
+      },
+      "short_text": {
+        "default": "mdi:text-short"
+      },
+      "station_distance": {
+        "default": "mdi:map-marker-distance"
+      },
+      "uv_category": {
+        "default": "mdi:sun-wireless"
+      },
+      "uv_end_time": {
+        "default": "mdi:sun-clock"
+      },
+      "uv_forecast": {
+        "default": "mdi:sun-wireless-outline"
+      },
+      "uv_max_index": {
+        "default": "mdi:sun-wireless"
+      },
+      "uv_start_time": {
+        "default": "mdi:sun-clock"
+      },
+      "warnings": {
+        "default": "mdi:alert-outline"
+      },
+      "wind_direction": {
+        "default": "mdi:compass-outline"
+      },
+      "wind_speed_kilometre": {
+        "default": "mdi:weather-windy"
+      },
+      "wind_speed_knot": {
+        "default": "mdi:weather-windy"
+      }
+    }
+  }
+}
