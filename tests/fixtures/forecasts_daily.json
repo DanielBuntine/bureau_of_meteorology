@@ -1,0 +1,370 @@
+{
+  "data": [
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "lower_range": 0,
+          "upper_range": 1,
+          "units": "mm"
+        },
+        "chance": 50,
+        "chance_of_no_rain_category": "medium",
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": null,
+        "end_time": null,
+        "max_index": null,
+        "start_time": null
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-05T20:34:59Z",
+        "sunset_time": "2026-09-06T08:02:55Z"
+      },
+      "date": "2026-09-05T14:00:00Z",
+      "temp_max": 17,
+      "temp_min": null,
+      "extended_text": "Cloudy. Slight chance of a shower. Light winds.",
+      "icon_descriptor": "cloudy",
+      "short_text": "Cloudy.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      },
+      "now": {
+        "is_night": true,
+        "now_label": "Overnight min",
+        "later_label": "Tomorrow's max",
+        "temp_now": 11,
+        "temp_later": 14
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 1,
+          "max": 2,
+          "lower_range": 0,
+          "upper_range": 2,
+          "units": "mm"
+        },
+        "chance": 80,
+        "chance_of_no_rain_category": "low",
+        "precipitation_amount_25_percent_chance": 2,
+        "precipitation_amount_50_percent_chance": 1,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": "moderate",
+        "end_time": "2026-09-07T04:30:00Z",
+        "max_index": 4,
+        "start_time": "2026-09-07T00:10:00Z"
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-06T20:33:28Z",
+        "sunset_time": "2026-09-07T08:03:45Z"
+      },
+      "date": "2026-09-06T14:00:00Z",
+      "temp_max": 14,
+      "temp_min": 11,
+      "extended_text": "Cloudy. High chance of showers, most likely in the morning. Light winds becoming southwesterly 25 to 30 km/h in the morning then tending southerly 20 to 30 km/h in the middle of the day.",
+      "icon_descriptor": "cloudy",
+      "short_text": "Showers easing.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "lower_range": 0,
+          "upper_range": 0,
+          "units": "mm"
+        },
+        "chance": 10,
+        "chance_of_no_rain_category": "very high",
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": "moderate",
+        "end_time": "2026-09-08T04:30:00Z",
+        "max_index": 5,
+        "start_time": "2026-09-08T00:00:00Z"
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-07T20:31:57Z",
+        "sunset_time": "2026-09-08T08:04:35Z"
+      },
+      "date": "2026-09-07T14:00:00Z",
+      "temp_max": 16,
+      "temp_min": 7,
+      "extended_text": "Mostly sunny. Light winds becoming southwesterly 15 to 20 km/h in the evening then tending westerly in the late evening.",
+      "icon_descriptor": "mostly_sunny",
+      "short_text": "Mostly sunny.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "lower_range": 0,
+          "upper_range": 1,
+          "units": "mm"
+        },
+        "chance": 60,
+        "chance_of_no_rain_category": "medium",
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": "moderate",
+        "end_time": "2026-09-09T04:30:00Z",
+        "max_index": 5,
+        "start_time": "2026-09-08T23:50:00Z"
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-08T20:30:26Z",
+        "sunset_time": "2026-09-09T08:05:25Z"
+      },
+      "date": "2026-09-08T14:00:00Z",
+      "temp_max": 14,
+      "temp_min": 9,
+      "extended_text": "Cloudy. Medium chance of showers, most likely in the morning. Winds westerly 15 to 20 km/h turning southerly 20 to 30 km/h during the morning.",
+      "icon_descriptor": "shower",
+      "short_text": "Shower or two.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "lower_range": 0,
+          "upper_range": 0,
+          "units": "mm"
+        },
+        "chance": 10,
+        "chance_of_no_rain_category": "very high",
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": "moderate",
+        "end_time": "2026-09-10T04:30:00Z",
+        "max_index": 4,
+        "start_time": "2026-09-10T00:00:00Z"
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-09T20:28:54Z",
+        "sunset_time": "2026-09-10T08:06:15Z"
+      },
+      "date": "2026-09-09T14:00:00Z",
+      "temp_max": 15,
+      "temp_min": 9,
+      "extended_text": "Cloudy. Winds southwesterly 15 to 20 km/h becoming light during the morning.",
+      "icon_descriptor": "cloudy",
+      "short_text": "Cloudy.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "lower_range": 0,
+          "upper_range": 0,
+          "units": "mm"
+        },
+        "chance": 5,
+        "chance_of_no_rain_category": "very high",
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": null,
+        "end_time": null,
+        "max_index": null,
+        "start_time": null
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-10T20:27:22Z",
+        "sunset_time": "2026-09-11T08:07:05Z"
+      },
+      "date": "2026-09-10T14:00:00Z",
+      "temp_max": 16,
+      "temp_min": 8,
+      "extended_text": "Partly cloudy. Light winds.",
+      "icon_descriptor": "cloudy",
+      "short_text": "Partly cloudy.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "lower_range": 0,
+          "upper_range": 0,
+          "units": "mm"
+        },
+        "chance": 10,
+        "chance_of_no_rain_category": "very high",
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": null,
+        "end_time": null,
+        "max_index": null,
+        "start_time": null
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-11T20:25:50Z",
+        "sunset_time": "2026-09-12T08:07:55Z"
+      },
+      "date": "2026-09-11T14:00:00Z",
+      "temp_max": 21,
+      "temp_min": 8,
+      "extended_text": "Mostly sunny. Light winds becoming northerly 15 to 20 km/h during the day.",
+      "icon_descriptor": "mostly_sunny",
+      "short_text": "Mostly sunny.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 2,
+          "lower_range": 0,
+          "upper_range": 2,
+          "units": "mm"
+        },
+        "chance": 40,
+        "chance_of_no_rain_category": "medium",
+        "precipitation_amount_25_percent_chance": 2,
+        "precipitation_amount_50_percent_chance": 0,
+        "precipitation_amount_75_percent_chance": 0
+      },
+      "uv": {
+        "category": null,
+        "end_time": null,
+        "max_index": null,
+        "start_time": null
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-12T20:24:18Z",
+        "sunset_time": "2026-09-13T08:08:45Z"
+      },
+      "date": "2026-09-12T14:00:00Z",
+      "temp_max": 23,
+      "temp_min": 13,
+      "extended_text": "Partly cloudy. Medium chance of showers. Light winds becoming northerly 15 to 20 km/h during the morning.",
+      "icon_descriptor": "shower",
+      "short_text": "Possible shower.",
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": null,
+          "max": null,
+          "lower_range": null,
+          "upper_range": null,
+          "units": "mm"
+        },
+        "chance": null,
+        "chance_of_no_rain_category": null,
+        "precipitation_amount_25_percent_chance": null,
+        "precipitation_amount_50_percent_chance": null,
+        "precipitation_amount_75_percent_chance": null
+      },
+      "uv": {
+        "category": null,
+        "end_time": null,
+        "max_index": null,
+        "start_time": null
+      },
+      "astronomical": {
+        "sunrise_time": "2026-09-13T20:22:45Z",
+        "sunset_time": "2026-09-14T08:09:35Z"
+      },
+      "date": "2026-09-13T14:00:00Z",
+      "temp_max": null,
+      "temp_min": 15,
+      "extended_text": null,
+      "icon_descriptor": null,
+      "short_text": null,
+      "surf_danger": null,
+      "fire_danger": null,
+      "fire_danger_category": {
+        "text": null,
+        "default_colour": null,
+        "dark_mode_colour": null
+      }
+    }
+  ],
+  "metadata": {
+    "response_timestamp": "2026-09-06T13:49:40Z",
+    "issue_time": "2026-09-06T12:41:17Z",
+    "next_issue_time": "2026-09-06T18:00:00Z",
+    "forecast_region": "Melbourne",
+    "forecast_type": "precis",
+    "copyright": "This application programming interface (API) is owned by the Bureau of Meteorology. You must not use, copy or share it. Find out more about our data services at https://www.bom.gov.au/resources/data-services."
+  }
+}
