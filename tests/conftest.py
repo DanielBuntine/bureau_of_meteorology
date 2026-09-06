@@ -74,12 +74,41 @@ def api_responses() -> dict[str, dict[str, Any]]:
             f"{BASE}/{GEOHASH6}/{suffix}"
         ]
 
-    # The search endpoint answers by coordinate, not by URL.
+    # The search endpoint answers by query string, not by URL.
     responses[BASE] = {
         f"{MELBOURNE[0]},{MELBOURNE[1]}": load_fixture("search"),
         f"{SYDNEY[0]},{SYDNEY[1]}": {
             "data": [{"geohash": GEOHASH_2, "name": "Sydney", "state": "NSW"}]
         },
+        # A name that matches several places, as "Coogee" really does.
+        "Coogee": {
+            "data": [
+                {
+                    "geohash": GEOHASH,
+                    "name": "Coogee",
+                    "state": "VIC",
+                    "postcode": "3000",
+                },
+                {
+                    "geohash": GEOHASH_2,
+                    "name": "Coogee",
+                    "state": "NSW",
+                    "postcode": "2034",
+                },
+            ]
+        },
+        # A postcode that matches exactly one place.
+        "3000": {
+            "data": [
+                {
+                    "geohash": GEOHASH,
+                    "name": "Melbourne",
+                    "state": "VIC",
+                    "postcode": "3000",
+                }
+            ]
+        },
+        "Nowhere": {"data": []},
     }
     return responses
 
@@ -88,7 +117,7 @@ def api_responses() -> dict[str, dict[str, Any]]:
 def mock_api(api_responses):
     """Patch the collector's HTTP layer with the recorded responses."""
 
-    async def _request(self, url: str, params: dict[str, str] | None = None):
+    async def _get(session, url: str, params: dict[str, str] | None = None):
         if url not in api_responses:
             raise AssertionError(f"Unexpected request to {url}")
         response = api_responses[url]
@@ -102,10 +131,9 @@ def mock_api(api_responses):
             return response[search]
         return response
 
-    with patch(
-        "custom_components.bureau_of_meteorology.PyBoM.collector.Collector._request",
-        _request,
-    ):
+    # Collector._request delegates here, so this covers the standalone search
+    # helpers the config flow uses as well.
+    with patch("custom_components.bureau_of_meteorology.PyBoM.collector._get", _get):
         yield api_responses
 
 

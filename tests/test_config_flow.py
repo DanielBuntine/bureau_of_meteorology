@@ -33,11 +33,17 @@ from .conftest import GEOHASH, GEOHASH_2, SYDNEY
 LOCATION = {CONF_LATITUDE: -37.8136, CONF_LONGITUDE: 144.9631}
 
 
+async def _choose_coordinates(manager, flow_id: str, location=None) -> dict:
+    """Take the "enter coordinates" branch of the opening menu."""
+    await manager.async_configure(flow_id, {"next_step_id": "coordinates"})
+    return await manager.async_configure(flow_id, location or LOCATION)
+
+
 async def _walk_full_flow(hass: HomeAssistant, flow_id: str, options=False) -> dict:
     """Answer every step of the flow and return the final result."""
     manager = hass.config_entries.options if options else hass.config_entries.flow
 
-    result = await manager.async_configure(flow_id, LOCATION)
+    result = await _choose_coordinates(manager, flow_id)
     assert result["step_id"] == "weather_name"
 
     result = await manager.async_configure(flow_id, {CONF_WEATHER_NAME: "Melbourne"})
@@ -80,7 +86,7 @@ async def test_full_user_flow(hass: HomeAssistant, mock_api) -> None:
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
-    assert result["type"] is FlowResultType.FORM
+    assert result["type"] is FlowResultType.MENU
     assert result["step_id"] == "user"
 
     result = await _walk_full_flow(hass, result["flow_id"])
@@ -99,7 +105,7 @@ async def test_flow_skips_disabled_groups(hass: HomeAssistant, mock_api) -> None
     )
     flow_id = result["flow_id"]
 
-    await hass.config_entries.flow.async_configure(flow_id, LOCATION)
+    await _choose_coordinates(hass.config_entries.flow, flow_id)
     await hass.config_entries.flow.async_configure(
         flow_id, {CONF_WEATHER_NAME: "Melbourne"}
     )
@@ -126,8 +132,10 @@ async def test_bad_location(hass: HomeAssistant) -> None:
         "Collector.async_resolve_location",
         side_effect=BomLocationError,
     ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], {CONF_LATITUDE: 51.5, CONF_LONGITUDE: -0.12}
+        result = await _choose_coordinates(
+            hass.config_entries.flow,
+            result["flow_id"],
+            {CONF_LATITUDE: 51.5, CONF_LONGITUDE: -0.12},
         )
 
     assert result["type"] is FlowResultType.FORM
@@ -145,9 +153,7 @@ async def test_cannot_connect(hass: HomeAssistant) -> None:
         "Collector.async_resolve_location",
         side_effect=BomApiError("boom"),
     ):
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"], LOCATION
-        )
+        result = await _choose_coordinates(hass.config_entries.flow, result["flow_id"])
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
@@ -162,7 +168,7 @@ async def test_duplicate_location_aborts(
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
     )
-    result = await hass.config_entries.flow.async_configure(result["flow_id"], LOCATION)
+    result = await _choose_coordinates(hass.config_entries.flow, result["flow_id"])
 
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
@@ -248,8 +254,10 @@ async def test_options_flow_move_updates_unique_id(
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     manager = hass.config_entries.options
-    result = await manager.async_configure(
-        result["flow_id"], {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]}
+    result = await _choose_coordinates(
+        manager,
+        result["flow_id"],
+        {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]},
     )
     result = await manager.async_configure(
         result["flow_id"], {CONF_WEATHER_NAME: "Sydney"}
@@ -277,7 +285,7 @@ async def test_options_flow_does_not_store_coordinates(
     manager = hass.config_entries.options
 
     result = await manager.async_init(entry.entry_id)
-    result = await manager.async_configure(result["flow_id"], LOCATION)
+    result = await _choose_coordinates(manager, result["flow_id"])
     result = await manager.async_configure(
         result["flow_id"], {CONF_WEATHER_NAME: "Melbourne"}
     )
@@ -315,5 +323,88 @@ async def test_reconfigure_is_not_undone_by_stale_options(
 
     # The Configure form must prefill the location the entry actually uses.
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "coordinates"}
+    )
     schema_defaults = {str(key): key.default() for key in result["data_schema"].schema}
     assert schema_defaults[CONF_LATITUDE] == SYDNEY[0]
+
+
+async def test_search_by_postcode(hass: HomeAssistant, mock_api) -> None:
+    """A postcode search fills the coordinates in for the user."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    manager = hass.config_entries.flow
+
+    result = await manager.async_configure(
+        result["flow_id"], {"next_step_id": "search"}
+    )
+    assert result["step_id"] == "search"
+
+    result = await manager.async_configure(result["flow_id"], {"search": "3000"})
+    assert result["step_id"] == "pick"
+
+    result = await manager.async_configure(result["flow_id"], {"location": GEOHASH})
+    assert result["step_id"] == "weather_name"
+
+
+async def test_search_offers_every_match(hass: HomeAssistant, mock_api) -> None:
+    """Same-named suburbs are distinguishable by state and postcode."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    manager = hass.config_entries.flow
+
+    await manager.async_configure(result["flow_id"], {"next_step_id": "search"})
+    result = await manager.async_configure(result["flow_id"], {"search": "Coogee"})
+
+    options = result["data_schema"].schema["location"].config["options"]
+    assert [option["label"] for option in options] == [
+        "Coogee, VIC 3000",
+        "Coogee, NSW 2034",
+    ]
+
+
+async def test_search_with_no_matches(hass: HomeAssistant, mock_api) -> None:
+    """A search that matches nothing says so instead of failing."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    manager = hass.config_entries.flow
+
+    await manager.async_configure(result["flow_id"], {"next_step_id": "search"})
+    result = await manager.async_configure(result["flow_id"], {"search": "Nowhere"})
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "search"
+    assert result["errors"] == {"base": "no_results"}
+
+
+async def test_search_result_is_stored_as_coordinates(
+    hass: HomeAssistant, mock_api
+) -> None:
+    """The entry ends up with coordinates, however the location was chosen."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    manager = hass.config_entries.flow
+    flow_id = result["flow_id"]
+
+    await manager.async_configure(flow_id, {"next_step_id": "search"})
+    await manager.async_configure(flow_id, {"search": "3000"})
+    await manager.async_configure(flow_id, {"location": GEOHASH})
+    await manager.async_configure(flow_id, {CONF_WEATHER_NAME: "Melbourne"})
+    result = await manager.async_configure(
+        flow_id,
+        {
+            CONF_OBSERVATIONS_CREATE: False,
+            CONF_FORECASTS_CREATE: False,
+            CONF_WARNINGS_CREATE: False,
+        },
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_LATITUDE] == -37.81425476074219
+    assert result["data"][CONF_LONGITUDE] == 144.96253967285156
+    assert result["result"].unique_id == GEOHASH
