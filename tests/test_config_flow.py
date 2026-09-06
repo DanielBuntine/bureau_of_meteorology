@@ -28,7 +28,7 @@ from custom_components.bureau_of_meteorology.PyBoM.collector import (
     BomLocationError,
 )
 
-from .conftest import GEOHASH
+from .conftest import GEOHASH, GEOHASH_2, SYDNEY
 
 LOCATION = {CONF_LATITUDE: -37.8136, CONF_LONGITUDE: 144.9631}
 
@@ -200,3 +200,70 @@ async def test_reconfigure_flow(hass: HomeAssistant, setup_integration) -> None:
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     assert entry.data[CONF_LATITUDE] == LOCATION[CONF_LATITUDE]
+
+
+async def test_reconfigure_moves_to_a_new_location(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """Reconfigure genuinely moves the entry, taking the unique ID with it."""
+    entry = setup_integration
+    assert entry.unique_id == GEOHASH
+
+    result = await entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_LATITUDE] == SYDNEY[0]
+    assert entry.unique_id == GEOHASH_2
+
+
+async def test_reconfigure_rejects_a_location_already_configured(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """Moving onto a location another entry already owns is refused."""
+    other = MockConfigEntry(domain=DOMAIN, version=2, unique_id=GEOHASH_2)
+    other.add_to_hass(hass)
+
+    result = await setup_integration.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]},
+    )
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    assert setup_integration.unique_id == GEOHASH
+
+
+async def test_options_flow_move_updates_unique_id(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """Changing location via Configure keeps the unique ID truthful."""
+    entry = setup_integration
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    manager = hass.config_entries.options
+    result = await manager.async_configure(
+        result["flow_id"], {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]}
+    )
+    result = await manager.async_configure(
+        result["flow_id"], {CONF_WEATHER_NAME: "Sydney"}
+    )
+    result = await manager.async_configure(
+        result["flow_id"],
+        {
+            CONF_OBSERVATIONS_CREATE: False,
+            CONF_FORECASTS_CREATE: False,
+            CONF_WARNINGS_CREATE: False,
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.data[CONF_LATITUDE] == SYDNEY[0]
+    assert entry.unique_id == GEOHASH_2

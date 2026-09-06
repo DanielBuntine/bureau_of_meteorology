@@ -2,8 +2,7 @@
   "config": {
     "abort": {
       "already_configured": "This location is already configured",
-      "reconfigure_successful": "Location updated successfully",
-      "wrong_location": "Those coordinates resolve to a different location. Add a new entry instead."
+      "reconfigure_successful": "Location updated successfully"
     },
     "error": {
       "bad_location": "These coordinates are outside the Bureau of Meteorology's coverage area",
@@ -72,8 +71,7 @@
   "options": {
     "abort": {
       "already_configured": "This location is already configured",
-      "reconfigure_successful": "Location updated successfully",
-      "wrong_location": "Those coordinates resolve to a different location. Add a new entry instead."
+      "reconfigure_successful": "Location updated successfully"
     },
     "error": {
       "bad_location": "These coordinates are outside the Bureau of Meteorology's coverage area",

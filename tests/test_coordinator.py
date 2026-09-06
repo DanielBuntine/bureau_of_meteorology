@@ -149,3 +149,33 @@ async def test_unknown_location_raises_location_error(mock_api, api_responses) -
     collector = Collector(None, 51.5, -0.12)
     with pytest.raises(BomLocationError):
         await collector.async_resolve_location()
+
+
+async def test_transient_failure_is_not_reported_as_bad_location(
+    mock_api, api_responses
+) -> None:
+    """A 5xx on the location resource must not read as 'outside coverage'.
+
+    Reporting a temporary outage as bad_location tells users their valid
+    Australian coordinates are unsupported.
+    """
+    api_responses[f"https://api.weather.bom.gov.au/v1/locations/{GEOHASH}"] = (
+        BomApiError("server error", status=503)
+    )
+
+    collector = Collector(None, -37.8136, 144.9631)
+    with pytest.raises(BomApiError) as err:
+        await collector.async_resolve_location()
+
+    assert not isinstance(err.value, BomLocationError)
+
+
+async def test_not_found_is_reported_as_bad_location(mock_api, api_responses) -> None:
+    """A definitive rejection does mean the coordinates are not covered."""
+    api_responses[f"https://api.weather.bom.gov.au/v1/locations/{GEOHASH}"] = (
+        BomApiError("not found", status=404)
+    )
+
+    collector = Collector(None, -37.8136, 144.9631)
+    with pytest.raises(BomLocationError):
+        await collector.async_resolve_location()

@@ -40,6 +40,14 @@ _LOGGER = logging.getLogger(__name__)
 MAX_FORECAST_DAYS = 7
 
 
+def _entry_for_geohash(hass, geohash: str, exclude_entry_id: str) -> bool:
+    """Return whether another config entry already covers this geohash."""
+    return any(
+        entry.unique_id == geohash and entry.entry_id != exclude_entry_id
+        for entry in hass.config_entries.async_entries(DOMAIN)
+    )
+
+
 def _sensor_choices(descriptions) -> dict[str, str]:
     """Return the multi-select options for a set of sensor descriptions."""
     return {
@@ -294,10 +302,14 @@ class BomConfigFlow(BomFlowSteps, ConfigFlow, domain=DOMAIN):
                     data_schema=self._location_schema(entry.data),
                     errors={"base": error},
                 )
-            await self.async_set_unique_id(self.collector.geohash)
-            self._abort_if_unique_id_mismatch(reason="wrong_location")
+            # Moving an entry to a new place is the point of this flow, so the
+            # unique ID moves with it rather than blocking the change.
+            if _entry_for_geohash(self.hass, self.collector.geohash, entry.entry_id):
+                return self.async_abort(reason="already_configured")
             return self.async_update_reload_and_abort(
-                entry, data_updates=dict(user_input)
+                entry,
+                data_updates=dict(user_input),
+                unique_id=self.collector.geohash,
             )
 
         return self.async_show_form(
@@ -358,6 +370,10 @@ class BomOptionsFlow(BomFlowSteps, OptionsFlow):
         """Store the answers, keeping the coordinates where setup reads them."""
         # async_setup_entry reads the coordinates from entry.data, so writing
         # them only to options would silently discard a location change.
+        geohash = self.collector.geohash
+        if _entry_for_geohash(self.hass, geohash, self.config_entry.entry_id):
+            return self.async_abort(reason="already_configured")
+
         self.hass.config_entries.async_update_entry(
             self.config_entry,
             data={
@@ -365,5 +381,8 @@ class BomOptionsFlow(BomFlowSteps, OptionsFlow):
                 CONF_LATITUDE: self.data[CONF_LATITUDE],
                 CONF_LONGITUDE: self.data[CONF_LONGITUDE],
             },
+            # Keep the unique ID pointing at the location actually configured,
+            # so it neither reserves the old place nor blocks a reconfigure.
+            unique_id=geohash,
         )
         return self.async_create_entry(data=self.data)

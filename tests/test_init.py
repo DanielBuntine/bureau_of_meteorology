@@ -7,11 +7,14 @@ from unittest.mock import patch
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.bureau_of_meteorology.const import (
     CONF_FORECASTS_BASENAME,
+    CONF_OBSERVATIONS_BASENAME,
+    CONF_WARNINGS_BASENAME,
     CONF_WEATHER_NAME,
     DOMAIN,
 )
@@ -146,3 +149,76 @@ async def test_renamed_entity_survives(
 async def test_unique_id_is_geohash(hass: HomeAssistant, setup_integration) -> None:
     """The entry is keyed on the BOM geohash so duplicates can be detected."""
     assert setup_integration.unique_id == GEOHASH
+
+
+async def test_pre_1_4_entry_gains_unique_id(
+    hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
+) -> None:
+    """Entries created before 1.4.0 have no unique ID; setup backfills it.
+
+    The old config flow never called async_set_unique_id, and those entries
+    were already version 2, so no migration runs for them.
+    """
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(config_entry, unique_id=None)
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.unique_id == GEOHASH
+
+
+async def test_orphaned_device_removed_after_rename(
+    hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
+) -> None:
+    """Renaming every basename must not leave the old device behind."""
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    device_registry = dr.async_get(hass)
+
+    def device_names() -> set[str]:
+        return {
+            device.name
+            for device in dr.async_entries_for_config_entry(
+                device_registry, config_entry.entry_id
+            )
+        }
+
+    assert device_names() == {"Melbourne"}
+
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={
+            **config_entry.data,
+            CONF_WEATHER_NAME: "Renamed",
+            CONF_OBSERVATIONS_BASENAME: "Renamed",
+            CONF_FORECASTS_BASENAME: "Renamed",
+            CONF_WARNINGS_BASENAME: "Renamed",
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert device_names() == {"Renamed"}
+
+
+async def test_user_disabled_entity_survives_reload(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """A user-disabled entity stays registered and stays disabled."""
+    entry = setup_integration
+    registry = er.async_get(hass)
+
+    entity_id = registry.async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}-observation-humidity"
+    )
+    assert entity_id is not None
+    registry.async_update_entity(entity_id, disabled_by=er.RegistryEntryDisabler.USER)
+
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+
+    after = registry.async_get(entity_id)
+    assert after is not None
+    assert after.disabled_by is er.RegistryEntryDisabler.USER

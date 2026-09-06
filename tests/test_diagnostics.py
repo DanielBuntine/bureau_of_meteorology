@@ -20,3 +20,13 @@ async def test_diagnostics_redacts_location(
     assert result["entry"]["data"]["longitude"] == "**REDACTED**"
     assert result["data"]["locations"]["data"]["geohash"] == "**REDACTED**"
     assert result["data"]["observations"]["data"]["temp"] == 13.6
+
+
+async def test_diagnostics_redacts_geohash_in_location_id(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """The location id embeds the geohash, so it must be redacted too."""
+    result = await async_get_config_entry_diagnostics(hass, setup_integration)
+
+    assert "r1r0fsn" not in str(result), "geohash leaked through diagnostics"
+    assert result["data"]["locations"]["data"]["id"] == "**REDACTED**"

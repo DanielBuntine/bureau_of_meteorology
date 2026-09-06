@@ -23,6 +23,7 @@ from .const import (
     CONF_WARNINGS_BASENAME,
     CONF_WARNINGS_CREATE,
     CONF_WEATHER_NAME,
+    DOMAIN,
     NOW_LATER_KEYS,
 )
 from .coordinator import BomConfigEntry, BomDataUpdateCoordinator
@@ -136,8 +137,6 @@ def _remove_stale_entities(hass: HomeAssistant, entry: ConfigEntry) -> None:
             _LOGGER.debug("Removing %s from entity registry", registry_entry.entity_id)
             entity_registry.async_remove(registry_entry.entity_id)
 
-    _remove_empty_devices(hass, entry)
-
 
 def _remove_empty_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Detach devices that no longer have any entities, e.g. after a rename."""
@@ -173,10 +172,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: BomConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
 
+    # Entries created before 1.4.0 have no unique ID, because the old config
+    # flow never set one. Backfill it so the duplicate-location check and the
+    # reconfigure flow work on upgraded installations too.
+    if entry.unique_id is None:
+        if any(
+            other.unique_id == collector.geohash and other.entry_id != entry.entry_id
+            for other in hass.config_entries.async_entries(DOMAIN)
+        ):
+            # Two pre-1.4.0 entries for one location: leave the second alone
+            # rather than have both claim the same unique ID.
+            _LOGGER.warning(
+                "Not backfilling the unique ID for %s: another entry already "
+                "covers this location",
+                entry.title,
+            )
+        else:
+            hass.config_entries.async_update_entry(entry, unique_id=collector.geohash)
+
     await _migrate_unique_ids(hass, entry)
     _remove_stale_entities(hass, entry)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Only now do the platforms know which device each entity belongs to, so a
+    # device orphaned by a basename change is only detectable at this point.
+    _remove_empty_devices(hass, entry)
+
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
     return True
