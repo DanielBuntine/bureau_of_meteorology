@@ -385,4 +385,13 @@ class BomOptionsFlow(BomFlowSteps, OptionsFlow):
             # so it neither reserves the old place nor blocks a reconfigure.
             unique_id=geohash,
         )
-        return self.async_create_entry(data=self.data)
+        # Coordinates belong to entry.data alone. Storing them in options too
+        # would let a stale option value outrank a later Reconfigure and quietly
+        # move the entry back.
+        return self.async_create_entry(
+            data={
+                key: value
+                for key, value in self.data.items()
+                if key not in (CONF_LATITUDE, CONF_LONGITUDE)
+            }
+        )

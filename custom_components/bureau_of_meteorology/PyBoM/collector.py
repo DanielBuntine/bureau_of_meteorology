@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 from dataclasses import dataclass, field
 import logging
 import time
@@ -155,7 +156,10 @@ class Collector:
             except (aiohttp.ClientError, TimeoutError) as err:
                 last_error = err
             else:
-                self._cache[cache_key] = (data, time.monotonic())
+                # The caller normalises this payload in place, so keep an
+                # untouched copy: re-formatting an already-formatted response
+                # would rewrite values such as rain_amount_range.
+                self._cache[cache_key] = (copy.deepcopy(data), time.monotonic())
                 return data
 
             if attempt < MAX_RETRIES - 1:
@@ -181,7 +185,7 @@ class Collector:
                     last_error,
                     int(age / 60),
                 )
-                return data
+                return copy.deepcopy(data)
             self._cache.pop(cache_key, None)
 
         status = last_error.status if isinstance(last_error, BomApiError) else None

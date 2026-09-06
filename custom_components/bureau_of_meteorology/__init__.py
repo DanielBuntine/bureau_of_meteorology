@@ -190,6 +190,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: BomConfigEntry) -> bool:
         else:
             hass.config_entries.async_update_entry(entry, unique_id=collector.geohash)
 
+    # Older versions wrote the coordinates into options as well as data, where
+    # they would outrank a later Reconfigure. Data is the only source now.
+    if CONF_LATITUDE in entry.options or CONF_LONGITUDE in entry.options:
+        hass.config_entries.async_update_entry(
+            entry,
+            options={
+                key: value
+                for key, value in entry.options.items()
+                if key not in (CONF_LATITUDE, CONF_LONGITUDE)
+            },
+        )
+
     await _migrate_unique_ids(hass, entry)
     _remove_stale_entities(hass, entry)
 
