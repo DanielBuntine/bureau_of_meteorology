@@ -1,0 +1,189 @@
+{
+  "metadata": {
+    "issue_time": "2026-09-06T12:37:00Z",
+    "response_timestamp": "2026-09-06T13:53:34Z",
+    "copyright": "This application programming interface (API) is owned by the Bureau of Meteorology. You must not use, copy or share it. Find out more about our data services at https://www.bom.gov.au/resources/data-services."
+  },
+  "data": [
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "units": "mm"
+        },
+        "chance": 30,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 13,
+      "temp_feels_like": 11,
+      "dew_point": 11,
+      "wind": {
+        "speed_knot": 5,
+        "speed_kilometre": 9,
+        "direction": "SW",
+        "gust_speed_knot": 9,
+        "gust_speed_kilometre": 17
+      },
+      "relative_humidity": 87,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T15:00:00Z",
+      "time": "2026-09-06T13:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T14:00:00Z"
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": null,
+          "units": "mm"
+        },
+        "chance": 30,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 0,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 12,
+      "temp_feels_like": 11,
+      "dew_point": 10,
+      "wind": {
+        "speed_knot": 4,
+        "speed_kilometre": 7,
+        "direction": "WSW",
+        "gust_speed_knot": 8,
+        "gust_speed_kilometre": 15
+      },
+      "relative_humidity": 86,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T15:00:00Z",
+      "time": "2026-09-06T14:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T15:00:00Z"
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "units": "mm"
+        },
+        "chance": 30,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 12,
+      "temp_feels_like": 11,
+      "dew_point": 10,
+      "wind": {
+        "speed_knot": 4,
+        "speed_kilometre": 7,
+        "direction": "W",
+        "gust_speed_knot": 8,
+        "gust_speed_kilometre": 15
+      },
+      "relative_humidity": 87,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T18:00:00Z",
+      "time": "2026-09-06T15:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T16:00:00Z"
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "units": "mm"
+        },
+        "chance": 30,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 12,
+      "temp_feels_like": 10,
+      "dew_point": 10,
+      "wind": {
+        "speed_knot": 4,
+        "speed_kilometre": 7,
+        "direction": "W",
+        "gust_speed_knot": 8,
+        "gust_speed_kilometre": 15
+      },
+      "relative_humidity": 86,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T18:00:00Z",
+      "time": "2026-09-06T16:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T17:00:00Z"
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "units": "mm"
+        },
+        "chance": 30,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 12,
+      "temp_feels_like": 10,
+      "dew_point": 9,
+      "wind": {
+        "speed_knot": 5,
+        "speed_kilometre": 9,
+        "direction": "W",
+        "gust_speed_knot": 9,
+        "gust_speed_kilometre": 17
+      },
+      "relative_humidity": 85,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T18:00:00Z",
+      "time": "2026-09-06T17:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T18:00:00Z"
+    },
+    {
+      "rain": {
+        "amount": {
+          "min": 0,
+          "max": 1,
+          "units": "mm"
+        },
+        "chance": 40,
+        "precipitation_amount_10_percent_chance": 1,
+        "precipitation_amount_25_percent_chance": 1,
+        "precipitation_amount_50_percent_chance": 0
+      },
+      "temp": 11,
+      "temp_feels_like": 9,
+      "dew_point": 9,
+      "wind": {
+        "speed_knot": 5,
+        "speed_kilometre": 9,
+        "direction": "W",
+        "gust_speed_knot": 10,
+        "gust_speed_kilometre": 19
+      },
+      "relative_humidity": 85,
+      "uv": 0,
+      "icon_descriptor": "shower",
+      "next_three_hourly_forecast_period": "2026-09-06T21:00:00Z",
+      "time": "2026-09-06T18:00:00Z",
+      "is_night": true,
+      "next_forecast_period": "2026-09-06T19:00:00Z"
+    }
+  ]
+}
