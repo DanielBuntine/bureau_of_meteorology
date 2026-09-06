@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "response_timestamp": "2026-09-06T13:53:46Z",
+    "issue_time": "2026-09-06T13:41:10Z",
+    "observation_time": "2026-09-06T13:40:00Z",
+    "copyright": "This application programming interface (API) is owned by the Bureau of Meteorology. You must not use, copy or share it. Find out more about our data services at https://www.bom.gov.au/resources/data-services."
+  },
+  "data": {
+    "temp": 13.6,
+    "temp_feels_like": 13.2,
+    "wind": {
+      "speed_kilometre": 0,
+      "speed_knot": 0,
+      "direction": "CALM"
+    },
+    "gust": {
+      "speed_kilometre": 6,
+      "speed_knot": 3
+    },
+    "max_gust": {
+      "speed_kilometre": 35,
+      "speed_knot": 19,
+      "time": "2026-09-05T15:26:00Z"
+    },
+    "max_temp": {
+      "time": "2026-09-06T02:22:00Z",
+      "value": 16.6
+    },
+    "min_temp": {
+      "time": "2026-09-06T13:40:00Z",
+      "value": 13.5
+    },
+    "rain_since_9am": 0,
+    "humidity": 70,
+    "station": {
+      "bom_id": "086338",
+      "name": "Melbourne (Olympic Park)",
+      "distance": 2470
+    }
+  }
+}

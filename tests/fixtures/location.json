@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "response_timestamp": "2026-09-06T13:53:45Z",
+    "copyright": "This application programming interface (API) is owned by the Bureau of Meteorology. You must not use, copy or share it. Find out more about our data services at https://www.bom.gov.au/resources/data-services."
+  },
+  "data": {
+    "geohash": "r1r0fsn",
+    "timezone": "Australia/Melbourne",
+    "latitude": -37.81425476074219,
+    "longitude": 144.96253967285156,
+    "marine_area_id": "VIC_MW005",
+    "tidal_point": "VIC_TP027",
+    "has_wave": false,
+    "id": "Melbourne-r1r0fsn",
+    "name": "Melbourne",
+    "state": "VIC"
+  }
+}
