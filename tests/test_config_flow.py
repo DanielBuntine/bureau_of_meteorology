@@ -267,3 +267,53 @@ async def test_options_flow_move_updates_unique_id(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.data[CONF_LATITUDE] == SYDNEY[0]
     assert entry.unique_id == GEOHASH_2
+
+
+async def test_options_flow_does_not_store_coordinates(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """Coordinates belong to entry.data; options must not shadow them."""
+    entry = setup_integration
+    manager = hass.config_entries.options
+
+    result = await manager.async_init(entry.entry_id)
+    result = await manager.async_configure(result["flow_id"], LOCATION)
+    result = await manager.async_configure(
+        result["flow_id"], {CONF_WEATHER_NAME: "Melbourne"}
+    )
+    result = await manager.async_configure(
+        result["flow_id"],
+        {
+            CONF_OBSERVATIONS_CREATE: False,
+            CONF_FORECASTS_CREATE: False,
+            CONF_WARNINGS_CREATE: False,
+        },
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert CONF_LATITUDE not in entry.options
+    assert CONF_LONGITUDE not in entry.options
+    assert entry.data[CONF_LATITUDE] == LOCATION[CONF_LATITUDE]
+
+
+async def test_reconfigure_is_not_undone_by_stale_options(
+    hass: HomeAssistant, setup_integration
+) -> None:
+    """A move via Reconfigure survives reopening Configure."""
+    entry = setup_integration
+
+    result = await entry.start_reconfigure_flow(hass)
+    await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {CONF_LATITUDE: SYDNEY[0], CONF_LONGITUDE: SYDNEY[1]},
+    )
+    await hass.async_block_till_done()
+
+    assert entry.data[CONF_LATITUDE] == SYDNEY[0]
+    assert CONF_LATITUDE not in entry.options
+
+    # The Configure form must prefill the location the entry actually uses.
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema_defaults = {str(key): key.default() for key in result["data_schema"].schema}
+    assert schema_defaults[CONF_LATITUDE] == SYDNEY[0]

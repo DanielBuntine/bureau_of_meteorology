@@ -222,3 +222,27 @@ async def test_user_disabled_entity_survives_reload(
     after = registry.async_get(entity_id)
     assert after is not None
     assert after.disabled_by is er.RegistryEntryDisabler.USER
+
+
+async def test_legacy_coordinates_removed_from_options(
+    hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
+) -> None:
+    """Coordinates written into options by older versions are cleaned out."""
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={
+            CONF_LATITUDE: -33.8688,
+            CONF_LONGITUDE: 151.2093,
+            CONF_WEATHER_NAME: "Melbourne",
+        },
+    )
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert CONF_LATITUDE not in config_entry.options
+    assert CONF_LONGITUDE not in config_entry.options
+    assert config_entry.options[CONF_WEATHER_NAME] == "Melbourne"
+    # The entry still uses the coordinates from data.
+    assert config_entry.data[CONF_LATITUDE] == -37.8136

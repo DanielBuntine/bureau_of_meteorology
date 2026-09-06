@@ -179,3 +179,31 @@ async def test_not_found_is_reported_as_bad_location(mock_api, api_responses) ->
     collector = Collector(None, -37.8136, 144.9631)
     with pytest.raises(BomLocationError):
         await collector.async_resolve_location()
+
+
+async def test_cached_refresh_does_not_alter_forecast_values(mock_api) -> None:
+    """Falling back to cache must not change already-formatted values.
+
+    Formatting normalises the payload in place. If the cache held that same
+    object, a second pass would turn a rain_amount_range of 0 into "0-0".
+    """
+    collector = Collector(None, -37.8136, 144.9631)
+    await collector.async_resolve_location()
+
+    first = await collector.async_update()
+    # Day 2 is the first whose rain.amount.max is null.
+    before = [day["rain_amount_range"] for day in first.daily]
+    assert before[2] == 0
+
+    with (
+        patch.object(
+            Collector, "_request", AsyncMock(side_effect=aiohttp.ClientError())
+        ),
+        patch(
+            "custom_components.bureau_of_meteorology.PyBoM.collector.asyncio.sleep",
+            AsyncMock(),
+        ),
+    ):
+        second = await collector.async_update()
+
+    assert [day["rain_amount_range"] for day in second.daily] == before
