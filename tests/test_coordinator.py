@@ -17,24 +17,100 @@ from custom_components.bureau_of_meteorology.PyBoM.collector import (
     BomLocationError,
     Collector,
 )
-from custom_components.bureau_of_meteorology.PyBoM.helpers import (
-    calculate_dew_point,
-    geohash_encode,
-)
 
 from .conftest import GEOHASH, GEOHASH6
 
-
-def test_geohash_precision() -> None:
-    """The helper defaults to the seven characters the location endpoint wants."""
-    assert len(geohash_encode(-37.8136, 144.9631)) == 7
-    assert geohash_encode(-37.8136, 144.9631, 6) == "r1r0fs"
+# The geohash and dew point helpers are covered in tests/test_helpers.py.
 
 
-def test_dew_point() -> None:
-    """The Tetens approximation matches known values."""
-    assert calculate_dew_point(20.0, 50.0) == 9.3
-    assert calculate_dew_point(13.6, 70.0) == 8.2
+def _collector() -> Collector:
+    """Return a collector that is never used to make a request."""
+    return Collector(AsyncMock(), -12.463763, 130.844398)
+
+
+def test_daily_forecasts_are_flattened_and_normalised() -> None:
+    """The first day honours ``now.is_night``; later days keep their descriptor."""
+    collector = _collector()
+    data = {
+        "data": [
+            {
+                "icon_descriptor": "sunny",
+                "rain": {"amount": {"min": 2, "max": 5}, "chance": 60},
+                "uv": {"category": "high"},
+                "astronomical": {"sunrise_time": "06:00"},
+                "now": {"is_night": True},
+            },
+            {
+                "icon_descriptor": "sunny",
+                "rain": {"amount": {"min": 0, "max": None}, "chance": 10},
+                "uv": {"category": "low"},
+                "astronomical": {"sunrise_time": "06:01"},
+            },
+        ]
+    }
+
+    collector._format_daily_forecasts(data)
+    today, later = data["data"]
+
+    assert today["icon_descriptor"] == "clear"
+    assert today["mdi_icon"] == "mdi:weather-night"
+    assert today["rain_chance"] == 60
+    assert today["rain_amount_min"] == 2
+    assert today["rain_amount_max"] == 5
+    assert today["rain_amount_range"] == "2–5"  # noqa: RUF001
+    assert today["uv_category"] == "high"
+    assert today["astronomical_sunrise_time"] == "06:00"
+    assert today["now_is_night"] is True
+
+    # Only day zero has a "now" block, so later days are left as forecast.
+    assert later["icon_descriptor"] == "sunny"
+    assert later["mdi_icon"] == "mdi:weather-sunny"
+    assert later["rain_amount_min"] == 0
+    # A missing maximum collapses onto the minimum rather than reading as a range.
+    assert later["rain_amount_max"] == 0
+    assert later["rain_amount_range"] == 0
+    assert later["uv_category"] == "low"
+
+
+def test_hourly_forecasts_are_flattened_and_normalised() -> None:
+    """Each hour reconciles its own icon against its own ``is_night`` flag."""
+    collector = _collector()
+    data = {
+        "data": [
+            {
+                "icon_descriptor": "mostly_sunny",
+                "is_night": True,
+                "rain": {"amount": {"min": 1, "max": 3}, "chance": 80},
+                "wind": {"speed_kilometre": 10},
+            },
+            {
+                "icon_descriptor": "clear",
+                "is_night": False,
+                "rain": {"amount": {"min": 4, "max": None}, "chance": 20},
+                "wind": {"speed_knot": 8},
+            },
+        ]
+    }
+
+    collector._format_hourly_forecasts(data)
+    first, second = data["data"]
+
+    assert first["icon_descriptor"] == "clear"
+    assert first["mdi_icon"] == "mdi:weather-night"
+    assert first["rain_amount_min"] == 1
+    assert first["rain_amount_max"] == 3
+    assert first["rain_amount_range"] == "1–3"  # noqa: RUF001
+    assert first["rain_chance"] == 80
+    assert first["wind_speed_kilometre"] == 10
+
+    # "clear" during the day is really "sunny".
+    assert second["icon_descriptor"] == "sunny"
+    assert second["mdi_icon"] == "mdi:weather-sunny"
+    assert second["rain_amount_min"] == 4
+    assert second["rain_amount_max"] == 4
+    assert second["rain_amount_range"] == 4
+    assert second["rain_chance"] == 20
+    assert second["wind_speed_knot"] == 8
 
 
 async def test_subresources_use_six_character_geohash(

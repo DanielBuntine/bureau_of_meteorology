@@ -1,19 +1,16 @@
 [project]
 name = "bureau-of-meteorology"
 version = "0.1.0"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.13.2,<3.14"
 
 [dependency-groups]
 dev = [
-    "iso8601>=2.1.0",
-    "homeassistant==2023.9.0",
-    "python-dateutil>=2.9.0.post0",
-    "mutagen>=1.47.0",
-    "numpy>=1.26.0",
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
-    "ruff>=0.16.8",
-    "pytest-cov>=7.1.0",
+    # Pins the Home Assistant release to test against, plus the matching
+    # pytest, pytest-asyncio and pytest-cov, so none of those are pinned
+    # again here. The integration's own minimum supported core is declared
+    # in hacs.json (2025.2.0); this is the version CI exercises.
+    "pytest-homeassistant-custom-component==0.13.316",
+    "ruff==0.16.8",
 ]
 
 [tool.uv]
