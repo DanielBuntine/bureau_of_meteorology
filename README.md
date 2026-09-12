@@ -70,16 +70,6 @@ logger:
 
 Older release notes are on the [releases page][releases].
 
-### 1.5.0 - Find your location by suburb or postcode
-
-- Setup and `Configure` now offer a location search as an alternative to typing
-  coordinates. Enter a suburb name or postcode, pick from the matches (shown
-  with state and postcode, so same-named suburbs are distinguishable), and the
-  coordinates are filled in for you.
-- Uses the Bureau's own location index, so the place you pick is the one the
-  BoM website would use. The entry still stores coordinates, so nothing about
-  existing entries changes.
-
 ### 1.4.0 - Modernisation for current Home Assistant
 
 Home Assistant compatibility:
@@ -114,6 +104,12 @@ New:
   add dew point and apparent temperature.
 - New sensors for maximum gust speed, maximum gust time, and the distance to
   the observation station.
+- Setup and `Configure` now offer a location search as an alternative to typing
+  coordinates. Enter a suburb name or postcode, pick from the matches (shown
+  with state and postcode, so same-named suburbs are distinguishable), and the
+  coordinates are filled in for you. This uses the Bureau's own location index,
+  so the place you pick is the one the BoM website would use. The entry still
+  stores coordinates, so nothing about existing entries changes.
 - The location is now resolved through the BOM's own search endpoint at full
   geohash precision.
 - Added a test suite plus hassfest, HACS and lint checks in CI.
