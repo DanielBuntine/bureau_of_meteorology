@@ -306,7 +306,8 @@ class BomFlowSteps:
             self.data.update(user_input)
             return await self._async_next_step("observations")
 
-        station = self.collector.observations_data["data"].get("station", {})
+        observation = (self.collector.observations_data or {}).get("data") or {}
+        station = observation.get("station") or {}
         data_schema = vol.Schema(
             {
                 vol.Required(

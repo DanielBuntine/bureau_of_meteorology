@@ -270,3 +270,22 @@ async def test_long_forecast_text_is_truncated(
     assert len(state.state) < 255
     assert state.state.endswith("...")
     assert state.attributes["state"] == "A" * 400
+
+
+async def test_observation_sensors_with_null_station(
+    hass: HomeAssistant, mock_api, api_responses, config_entry: MockConfigEntry
+) -> None:
+    """The BOM can report "station": null; sensors must still update."""
+    observations = api_responses[
+        "https://api.weather.bom.gov.au/v1/locations/r1r0fs/observations"
+    ]
+    observations["data"]["station"] = None
+
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.melbourne_current_temperature")
+    assert state.state == "13.6"
+    assert "bom_id" not in state.attributes
+    assert "attribution" in state.attributes

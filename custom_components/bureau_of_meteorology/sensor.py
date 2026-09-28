@@ -192,8 +192,10 @@ class ObservationSensor(SensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the sensor."""
         data = self.coordinator.data
-        attributes = self._timestamped_metadata(data.observations.get("metadata", {}))
-        attributes.update(data.observation.get("station", {}))
+        attributes = self._timestamped_metadata(data.observations.get("metadata") or {})
+        # The BOM reports "station": null when no station is in range.
+        if isinstance(station := data.observation.get("station"), dict):
+            attributes.update(station)
 
         if self.sensor_name in TIMED_OBSERVATIONS:
             reading = data.observation.get(self.sensor_name) or {}
@@ -284,7 +286,7 @@ class ForecastSensor(SensorBase):
 
         data = self.coordinator.data
         attributes = self._timestamped_metadata(
-            data.daily_forecasts.get("metadata", {})
+            data.daily_forecasts.get("metadata") or {}
         )
 
         if forecast_date := self._parse_timestamp(forecast.get("date")):
@@ -334,7 +336,7 @@ class NowLaterSensor(SensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the sensor."""
         return self._timestamped_metadata(
-            self.coordinator.data.daily_forecasts.get("metadata", {})
+            self.coordinator.data.daily_forecasts.get("metadata") or {}
         )
 
 
@@ -360,7 +362,7 @@ class WarningsSensor(SensorBase):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes of the sensor."""
         data = self.coordinator.data
-        attributes = self._timestamped_metadata(data.warnings.get("metadata", {}))
+        attributes = self._timestamped_metadata(data.warnings.get("metadata") or {})
         attributes["warnings"] = data.warning_list
         return attributes
 

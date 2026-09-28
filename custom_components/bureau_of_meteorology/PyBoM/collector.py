@@ -106,12 +106,12 @@ class BomData:
     @property
     def timezone(self) -> str:
         """Return the IANA timezone name reported for this location."""
-        return self.locations.get("data", {}).get("timezone", "UTC")
+        return (self.locations.get("data") or {}).get("timezone") or "UTC"
 
     @property
     def location_name(self) -> str | None:
         """Return the BOM's own name for this location."""
-        return self.locations.get("data", {}).get("name")
+        return (self.locations.get("data") or {}).get("name")
 
     @property
     def observation(self) -> dict[str, Any]:
@@ -303,7 +303,7 @@ class Collector:
     def _format_daily_forecasts(self, data: dict[str, Any]) -> None:
         """Flatten and normalise the daily forecast payload."""
         for day, entry in enumerate(data.get("data") or []):
-            flatten_dict(["amount"], entry.get("rain", {}))
+            flatten_dict(["amount"], entry.get("rain") or {})
             flatten_dict(["rain", "uv", "astronomical"], entry)
 
             if day == 0:
@@ -318,7 +318,7 @@ class Collector:
         """Flatten and normalise the hourly forecast payload."""
         for entry in data.get("data") or []:
             self._resolve_icon(entry, entry.get("is_night"))
-            flatten_dict(["amount"], entry.get("rain", {}))
+            flatten_dict(["amount"], entry.get("rain") or {})
             flatten_dict(["rain", "wind"], entry)
             self._format_rain_range(entry)
 

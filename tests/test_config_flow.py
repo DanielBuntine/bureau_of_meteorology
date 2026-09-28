@@ -98,6 +98,23 @@ async def test_full_user_flow(hass: HomeAssistant, mock_api) -> None:
     assert result["result"].unique_id == GEOHASH
 
 
+async def test_user_flow_with_null_station(
+    hass: HomeAssistant, mock_api, api_responses
+) -> None:
+    """A null observation station must not break the observations step."""
+    observations = api_responses[
+        "https://api.weather.bom.gov.au/v1/locations/r1r0fs/observations"
+    ]
+    observations["data"]["station"] = None
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await _walk_full_flow(hass, result["flow_id"])
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+
+
 async def test_flow_skips_disabled_groups(hass: HomeAssistant, mock_api) -> None:
     """Declining every sensor group goes straight to creating the entry."""
     result = await hass.config_entries.flow.async_init(

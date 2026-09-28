@@ -14,6 +14,7 @@ from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
 from custom_components.bureau_of_meteorology.PyBoM.collector import (
     BomApiError,
+    BomData,
     BomLocationError,
     Collector,
 )
@@ -111,6 +112,36 @@ def test_hourly_forecasts_are_flattened_and_normalised() -> None:
     assert second["rain_amount_range"] == 4
     assert second["rain_chance"] == 20
     assert second["wind_speed_knot"] == 8
+
+
+def test_null_blocks_are_tolerated() -> None:
+    """The BOM sends null for absent blocks; formatting must not raise."""
+    collector = _collector()
+    daily = {
+        "data": [
+            {"icon_descriptor": "sunny", "rain": None, "now": None, "uv": None},
+            {"icon_descriptor": "cloudy", "rain": None, "astronomical": None},
+        ]
+    }
+    hourly = {"data": [{"icon_descriptor": "sunny", "rain": None, "wind": None}]}
+    observations = {"data": {"temp": 20.1, "station": None, "wind": None}}
+
+    collector._format_daily_forecasts(daily)
+    collector._format_hourly_forecasts(hourly)
+    collector._format_observations(observations)
+
+    assert daily["data"][1]["rain_amount_range"] is None
+    assert daily["data"][1]["mdi_icon"] == "mdi:weather-cloudy"
+    assert hourly["data"][0]["rain_amount_max"] is None
+    assert "station_name" not in observations["data"]
+
+
+def test_null_location_data_falls_back() -> None:
+    """A location payload of {"data": null} still yields a usable timezone."""
+    data = BomData(locations={"data": None})
+
+    assert data.timezone == "UTC"
+    assert data.location_name is None
 
 
 async def test_subresources_use_six_character_geohash(

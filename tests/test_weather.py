@@ -9,9 +9,10 @@ from homeassistant.components.weather import (
 from homeassistant.components.weather import (
     DOMAIN as WEATHER_DOMAIN,
 )
-from homeassistant.const import ATTR_ENTITY_ID
+from homeassistant.const import ATTR_ENTITY_ID, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 
 async def _forecast(hass: HomeAssistant, entity_id: str, forecast_type: str) -> list:
@@ -87,3 +88,30 @@ async def test_hourly_forecast_fields(hass: HomeAssistant, setup_integration) ->
     assert first["wind_bearing"] == "SW"
     assert first["humidity"] == 87
     assert first["uv_index"] == 0
+
+
+async def test_weather_survives_null_blocks(
+    hass: HomeAssistant, mock_api, api_responses, config_entry: MockConfigEntry
+) -> None:
+    """Null station and rain blocks from the BOM must not take the entity down."""
+    base = "https://api.weather.bom.gov.au/v1/locations/r1r0fs"
+    api_responses[f"{base}/observations"]["data"]["station"] = None
+    api_responses[f"{base}/forecasts/daily"]["data"][1]["rain"] = None
+    api_responses[f"{base}/forecasts/hourly"]["data"][0]["rain"] = None
+
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("weather.melbourne")
+    assert state.state != STATE_UNAVAILABLE
+    assert state.attributes["temperature"] == 13.6
+
+    daily = await _forecast(hass, "weather.melbourne", "daily")
+    assert len(daily) == 9
+    assert daily[1].get("precipitation") is None
+    assert daily[1]["temperature"] == 14.0
+
+    hourly = await _forecast(hass, "weather.melbourne_hourly", "hourly")
+    assert len(hourly) == 6
+    assert hourly[0].get("precipitation") is None
