@@ -2,7 +2,7 @@
 
 Several cases here are carried over from the upstream
 ``tests/test_pybom_helpers_and_formatters.py``, which was written against the
-pre-1.4.0 architecture and could not survive the rewrite.
+1.3.x architecture and could not survive the rewrite.
 """
 
 from __future__ import annotations

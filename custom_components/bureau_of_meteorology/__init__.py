@@ -47,7 +47,7 @@ def _option(entry: ConfigEntry, key: str, default=None):
 
 
 def _expected_entities(entry: ConfigEntry) -> dict[str, str]:
-    """Map every unique ID this entry should own to its pre-1.4.0 equivalent.
+    """Map every unique ID this entry should own to its 1.3.x equivalent.
 
     The old IDs were built from the user supplied basenames, which meant two
     entries for the same place collided. The new IDs are scoped to the config
@@ -111,7 +111,7 @@ async def _migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
     old_to_new = {old: new for new, old in _expected_entities(entry).items()}
     entity_registry = er.async_get(hass)
 
-    # A pre-1.4.0 release cannot see the entry scoped entities, so running one
+    # A 1.3.x release cannot see the entry scoped entities, so running one
     # and coming back leaves a name based duplicate (e.g. weather.home_2)
     # beside the original. Re-keying the duplicate would collide with the
     # original and fail setup, so drop it and keep the original entity_id.
@@ -191,7 +191,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BomConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
 
-    # Entries created before 1.4.0 have no unique ID, because the old config
+    # Entries created by 1.3.x have no unique ID, because the old config
     # flow never set one. Backfill it so the duplicate-location check and the
     # reconfigure flow work on upgraded installations too.
     if entry.unique_id is None:
@@ -199,7 +199,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: BomConfigEntry) -> bool:
             other.unique_id == collector.geohash and other.entry_id != entry.entry_id
             for other in hass.config_entries.async_entries(DOMAIN)
         ):
-            # Two pre-1.4.0 entries for one location: leave the second alone
+            # Two 1.3.x entries for one location: leave the second alone
             # rather than have both claim the same unique ID.
             _LOGGER.warning(
                 "Not backfilling the unique ID for %s: another entry already "
