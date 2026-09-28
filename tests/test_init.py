@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
+from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -102,6 +102,43 @@ async def test_unique_id_migration(
     migrated_weather = registry.async_get(weather.entity_id)
     assert migrated_weather is not None
     assert migrated_weather.unique_id == f"{config_entry.entry_id}-weather"
+
+
+async def test_unique_id_migration_after_downgrade(
+    hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
+) -> None:
+    """Returning from a pre-1.4.0 release keeps the original entity.
+
+    That release cannot see the entry scoped weather entity, so it registers a
+    name based duplicate as weather.melbourne_2. Re-keying the duplicate would
+    collide with the original and fail setup of the whole entry.
+    """
+    config_entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+
+    original = registry.async_get_or_create(
+        "weather",
+        DOMAIN,
+        f"{config_entry.entry_id}-weather",
+        config_entry=config_entry,
+        suggested_object_id="melbourne",
+    )
+    duplicate = registry.async_get_or_create(
+        "weather",
+        DOMAIN,
+        "Melbourne",
+        config_entry=config_entry,
+        suggested_object_id="melbourne",
+    )
+    assert duplicate.entity_id == "weather.melbourne_2"
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.LOADED
+    assert registry.async_get(duplicate.entity_id) is None
+    assert registry.async_get(original.entity_id) is not None
+    assert hass.states.get("weather.melbourne").state != STATE_UNAVAILABLE
 
 
 async def test_stale_entities_removed(

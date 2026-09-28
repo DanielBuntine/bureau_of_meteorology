@@ -109,6 +109,25 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _migrate_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Re-key entities from the old name based unique IDs to entry scoped ones."""
     old_to_new = {old: new for new, old in _expected_entities(entry).items()}
+    entity_registry = er.async_get(hass)
+
+    # A pre-1.4.0 release cannot see the entry scoped entities, so running one
+    # and coming back leaves a name based duplicate (e.g. weather.home_2)
+    # beside the original. Re-keying the duplicate would collide with the
+    # original and fail setup, so drop it and keep the original entity_id.
+    for registry_entry in er.async_entries_for_config_entry(
+        entity_registry, entry.entry_id
+    ):
+        new_id = old_to_new.get(registry_entry.unique_id)
+        if new_id is not None and entity_registry.async_get_entity_id(
+            registry_entry.domain, DOMAIN, new_id
+        ):
+            _LOGGER.debug(
+                "Removing %s, a duplicate of the entity with unique_id %s",
+                registry_entry.entity_id,
+                new_id,
+            )
+            entity_registry.async_remove(registry_entry.entity_id)
 
     @callback
     def _migrate(registry_entry: er.RegistryEntry) -> dict[str, str] | None:
