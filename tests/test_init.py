@@ -107,7 +107,7 @@ async def test_unique_id_migration(
 async def test_unique_id_migration_after_downgrade(
     hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
 ) -> None:
-    """Returning from a pre-1.4.0 release keeps the original entity.
+    """Returning from a 1.3.x release keeps the original entity.
 
     That release cannot see the entry scoped weather entity, so it registers a
     name based duplicate as weather.melbourne_2. Re-keying the duplicate would
@@ -191,7 +191,7 @@ async def test_unique_id_is_geohash(hass: HomeAssistant, setup_integration) -> N
 async def test_pre_1_4_entry_gains_unique_id(
     hass: HomeAssistant, mock_api, config_entry: MockConfigEntry
 ) -> None:
-    """Entries created before 1.4.0 have no unique ID; setup backfills it.
+    """Entries created by 1.3.x have no unique ID; setup backfills it.
 
     The old config flow never called async_set_unique_id, and those entries
     were already version 2, so no migration runs for them.

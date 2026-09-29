@@ -117,7 +117,7 @@ class WeatherDaily(WeatherBase):
     """Representation of a BOM daily weather entity."""
 
     _attr_supported_features = WeatherEntityFeature.FORECAST_DAILY
-    # Takes the device name, matching the pre-1.4.0 entity name.
+    # Takes the device name, matching the 1.3.x entity name.
     _attr_name = None
 
     def __init__(

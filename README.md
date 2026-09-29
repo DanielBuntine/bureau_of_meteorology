@@ -66,52 +66,19 @@ logger:
 1. This integration will not refresh data faster than once every 5 minutes.
 2. All feature requests, issues and questions are welcome.
 
+## Upgrading from 1.3.x
+
+Requires Home Assistant 2025.2.0 or later. Existing entities are migrated
+automatically, so your entity IDs, history and automations are unchanged.
+Friendly names do change: sensors now use their full descriptive name (for
+example `Melbourne Current Temperature` rather than `Melbourne Temp`).
+
+Going back to a 1.3.x release afterwards creates duplicate entities with a `_2`
+suffix, because those releases identify entities differently. Upgrading again
+removes the duplicates and restores the originals.
+
 ## Release Notes
 
-Older release notes are on the [releases page][releases].
-
-### 1.4.0 - Modernisation for current Home Assistant
-
-Home Assistant compatibility:
-- Requires Home Assistant 2025.2.0 or later.
-- Moved to `ConfigEntry.runtime_data`, a dedicated coordinator module, and a
-  shared entity base class.
-- Entities now use `has_entity_name` with translated names and icons, so they
-  are named consistently and can be translated.
-- Unique IDs are now scoped to the config entry. Existing entities are migrated
-  automatically, so **your entity IDs, history and automations are unchanged**.
-  Friendly names do change: sensors now use their full descriptive name (for
-  example `Melbourne Current Temperature` rather than `Melbourne Temp`).
-- Added a reconfigure flow, diagnostics, and duplicate location detection.
-- Dropped the `iso8601` dependency in favour of Home Assistant's own utilities.
-
-Fixes:
-- Forecast timestamps are now timezone aware. They were previously emitted
-  without an offset, leaving forecast times ambiguous.
-- Forecast minimum temperature and wind gust speed now reach the weather card.
-  They were being passed in fields Home Assistant no longer reads.
-- Migrating a version 1 config entry no longer fails.
-- Changing the location via `Configure` now actually takes effect.
-- Renaming an entity no longer causes it to be deleted on the next reload.
-- Sensors with no data are now correctly unavailable instead of reporting the
-  literal string `unavailable`.
-- Timestamp sensors now emit real timestamps rather than strings.
-- Removed three overlapping rate limits that could leave the coordinator with
-  no data, and a listener leak on reload.
-
-New:
-- Weather entities expose apparent temperature and dew point; hourly forecasts
-  add dew point and apparent temperature.
-- New sensors for maximum gust speed, maximum gust time, and the distance to
-  the observation station.
-- Setup and `Configure` now offer a location search as an alternative to typing
-  coordinates. Enter a suburb name or postcode, pick from the matches (shown
-  with state and postcode, so same-named suburbs are distinguishable), and the
-  coordinates are filled in for you. This uses the Bureau's own location index,
-  so the place you pick is the one the BoM website would use. The entry still
-  stores coordinates, so nothing about existing entries changes.
-- The location is now resolved through the BOM's own search endpoint at full
-  geohash precision.
-- Added a test suite plus hassfest, HACS and lint checks in CI.
+See the [releases page][releases].
 
 [releases]: https://github.com/bremor/bureau_of_meteorology/releases
